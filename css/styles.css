@@ -265,20 +265,45 @@ em { font-style: italic; }
 .eyebrow--center { justify-content: center; }
 .section--dark .eyebrow { color: var(--orange-soft); }
 
-/* JS reveal */
-[data-reveal] {
+/* Scroll reveal (IntersectionObserver toggles .is-visible) */
+[data-reveal],
+[data-reveal-child] {
   opacity: 0;
-  transform: translateY(28px);
+  transform: translateY(26px);
+  transition: opacity .7s var(--ease-out), transform .7s var(--ease-out);
 }
-.no-js [data-reveal] { opacity: 1; transform: none; }
+[data-reveal].is-visible,
+[data-reveal-child].is-visible {
+  opacity: 1;
+  transform: none;
+}
+/* If JS never runs, show everything */
+.no-js [data-reveal],
+.no-js [data-reveal-child] { opacity: 1; transform: none; }
 
 /* 7. NAVIGATION ------------------------------------------------------- */
 .nav {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 100;
-  transition: background .4s var(--ease), box-shadow .4s var(--ease), backdrop-filter .4s;
+  transition: transform .4s var(--ease);
 }
+/* Glass lives on a pseudo-element so .nav itself never becomes a containing
+   block for the fixed mobile menu (backdrop-filter/transform would trap it). */
+.nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  box-shadow: 0 1px 0 rgba(34,42,52,0.06), var(--shadow-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .4s var(--ease);
+}
+.nav.is-scrolled::before { opacity: 1; }
 .nav__inner {
   display: flex;
   align-items: center;
@@ -317,18 +342,14 @@ em { font-style: italic; }
 
 .nav__actions { display: flex; align-items: center; gap: 1rem; }
 
-/* Scrolled state — glass */
-.nav.is-scrolled {
-  background: rgba(255,255,255,0.72);
-  backdrop-filter: saturate(180%) blur(18px);
-  -webkit-backdrop-filter: saturate(180%) blur(18px);
-  box-shadow: 0 1px 0 rgba(34,42,52,0.06), var(--shadow-sm);
-}
+/* Scrolled state — glass (background handled by .nav::before above) */
 .nav.is-scrolled .nav__link { color: var(--charcoal); mix-blend-mode: normal; }
 .nav.is-scrolled .nav__logo img { filter: none; }
 
 /* Hide nav on scroll-down, show on scroll-up */
-.nav.is-hidden { transform: translateY(-100%); }
+/* .nav.is-hidden { transform: translateY(-100%); } */
+/* Never hide or trap the menu while it's open */
+.nav--open { transform: none !important; }
 
 .nav__cta { padding: 0.7rem 1.4rem; font-size: 0.9rem; }
 
@@ -394,9 +415,10 @@ em { font-style: italic; }
   height: 100%;
   object-fit: cover;
   object-position: center 30%;
-  transform: scale(1.12);
-  will-change: transform;
+  transform: scale(1.14);
+  animation: heroZoom 16s var(--ease-out) forwards;
 }
+@keyframes heroZoom { to { transform: scale(1); } }
 .hero__overlay {
   position: absolute;
   inset: 0;
