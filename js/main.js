@@ -67,6 +67,57 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* Hero carousel — backdrop + caption cross-fade in sync               */
+  /* ------------------------------------------------------------------ */
+  const hero = document.querySelector('[data-hero]');
+  if (hero) {
+    const slides = Array.from(hero.querySelectorAll('.hero__slide'));
+    const captions = Array.from(hero.querySelectorAll('.hero__caption'));
+    const dots = Array.from(hero.querySelectorAll('.hero__dot'));
+    const count = slides.length;
+    let current = 0;
+    let timer = null;
+    const INTERVAL = 6000;
+
+    const go = (next) => {
+      next = (next + count) % count;
+      if (next === current) return;
+      [slides, captions, dots].forEach((set) => {
+        if (set[current]) set[current].classList.remove('is-active');
+        if (set[next]) set[next].classList.add('is-active');
+      });
+      dots.forEach((d, i) => d.setAttribute('aria-selected', String(i === next)));
+      // restart the Ken Burns zoom on the incoming slide
+      if (slides[next]) {
+        slides[next].style.animation = 'none';
+        void slides[next].offsetWidth;
+        slides[next].style.animation = '';
+      }
+      current = next;
+    };
+
+    const start = () => {
+      if (prefersReduced || count < 2) return;
+      stop();
+      timer = setInterval(() => go(current + 1), INTERVAL);
+    };
+    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+
+    dots.forEach((dot, i) => {
+      dot.addEventListener('click', () => { go(i); start(); });
+    });
+
+    // Pause while hovered / off-screen; resume otherwise
+    hero.addEventListener('mouseenter', stop);
+    hero.addEventListener('mouseleave', start);
+    document.addEventListener('visibilitychange', () => {
+      document.hidden ? stop() : start();
+    });
+
+    start();
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Animated counters                                                   */
   /* ------------------------------------------------------------------ */
   const counters = document.querySelectorAll('[data-count]');
